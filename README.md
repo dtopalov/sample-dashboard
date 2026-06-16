@@ -33,140 +33,67 @@ Open `http://localhost:4200`.
 
 ---
 
-## UX & Technical Audit
+## From Requirement to App — What We Addressed
 
-### Initial Concerns
+### Accessibility
 
-The following concerns were identified before a single line of code was written — some raised by the product owner, others surfaced during technical planning.
+**Concern:** A plain data table with default styling would fail WCAG AA — poor contrast, no focus management, no ARIA semantics.
 
-#### Accessibility & Contrast
+**Resolution:** The Ocean Blue A11y Kendo theme provides WCAG AA contrast out of the box. The top bar (primary blue background, white text) passes AA at all sizes. Every interactive control has an `aria-label`; the drawer and dialog manage focus automatically. A `<main id="main-content" tabindex="-1">` landmark serves as a skip-navigation target.
 
-**Concern (product owner):** The default Kendo theme doesn't guarantee WCAG AA contrast on all UI surfaces, particularly the top bar.
+### Typography & Visual Quality
 
-**Concern (engineering):** Accessibility isn't just contrast — it covers focus management, ARIA roles, keyboard navigation, and semantic markup.
+**Concern:** The Angular CLI default produces a bare, unstyled shell — system fonts, no visual hierarchy, nothing that reads as a real product.
 
-**Resolution:**
-- Selected the **Ocean Blue A11y** Kendo theme, which ships with WCAG AA contrast ratios baked in.
-- Top bar uses `background: var(--kendo-color-primary)` (deep blue) with `color: #fff` — passes AA at all tested sizes.
-- All interactive controls carry `aria-label`, `aria-pressed` where appropriate.
-- Dialog and drawer manage focus automatically via Kendo's built-in a11y support.
-- `<main id="main-content" tabindex="-1">` as a skip-navigation target.
+**Resolution:** Inter (Google Fonts, 400–700) is loaded via preconnect links and applied globally. The top bar uses a strong primary blue, the brand name is weighted at 700, and Kendo's CSS custom properties carry consistent spacing and color throughout.
 
-#### Typography
+### Navigation
 
-**Concern (product owner):** The default system font feels amateurish and inconsistent across platforms.
+**Concern:** A sidebar with no active state, no route binding, and a toggle button with no clear label is confusing to use and inaccessible.
 
-**Resolution:** Loaded **Inter** (400/500/600/700) from Google Fonts via `<link rel="preconnect">` in `index.html`. Applied globally via `font-family: 'Inter', system-ui, sans-serif` in `styles.scss`. Inter is a neutral, highly legible sans-serif designed specifically for screen UI.
+**Resolution:** The Kendo Drawer tracks the active route reactively — `toSignal` + `NavigationEnd` feeds a `computed()` that marks the correct item as `selected` on every navigation. The toggle button labels itself "Hide Sidebar" / "Show Sidebar" and carries `aria-pressed`. On mobile the drawer switches to overlay mode and collapses automatically after selecting an item.
 
-#### Navigation Clarity
+### Responsive Layout
 
-**Concern (product owner):** The sidebar toggle button didn't clearly communicate its state or purpose.
+**Concern:** A fixed-column data grid is unusable on tablet and broken on phone.
 
-**Resolution:**
-- Button label switches between `"Hide Sidebar"` / `"Show Sidebar"` based on current state.
-- `aria-pressed` attribute reflects toggle state for screen readers.
-- On mobile (< 600px), the label is hidden to save space — only the hamburger icon remains, which is universally understood.
+**Resolution:** Three distinct modes driven by a `_width` signal:
 
-#### Language Switcher
+| Breakpoint | Mode |
+|---|---|
+| ≥ 1024px | Full grid — all columns visible, icon + text action buttons |
+| 640–1023px | Tablet — Phone and Teams columns hidden, actions icon-only |
+| < 640px | Phone — Kendo Grid `dataLayoutMode: 'stacked'` renders each row as a vertical label/value stack |
 
-**Concern (product owner):** Globe icon + "EN" text as separate elements looked disconnected.
+Pager button count and item-count info scale with the breakpoint. `kendoGridBinding` handles paging, sorting, and filtering automatically against the full dataset.
 
-**Resolution:** Single `kendo-dropdownbutton` combining the globe SVG icon and language label. Dropdown lists four locales with flag emoji. Non-implemented locales are marked `noop` — transparent about prototype scope without being misleading.
+### CRUD & Data Management
 
-#### User Profile Menu
+**Concern:** Read-only grids are demos, not prototypes. The requirement was a fully functional management interface.
 
-**Concern (product owner):** No profile/account access was available in the top bar.
+**Resolution:** Full add / edit / delete flow:
+- **Add/Edit** — Kendo Dialog with a reactive form: text inputs, a role dropdown, a multiselect for teams, and an avatar upload (simulated via interceptor).
+- **Delete** — confirmation dialog before any destructive action.
+- **Notifications** — Kendo Notification toasts confirm every operation (success / warning).
+- All state is held in a signal-based `UserService`; the grid reflects changes instantly.
 
-**Resolution:** `kendo-dropdownbutton` with the current user's avatar, name, and a chevron. Dropdown includes My Profile, Account Settings, Notifications, Help & Support, and Sign Out (styled in error/danger red). Current user data comes from a typed `CURRENT_USER` constant — ready to be replaced with a real auth context.
+### Actions Column
 
-#### Drawer Navigation & Active State
+**Concern:** Icon-only action buttons are ambiguous and inaccessible — users can't tell what they do without hovering, and screen readers have nothing to read.
 
-**Concern (engineering):** Custom drawer item templates break Kendo's internal mini-mode geometry, causing icon misalignment at the 50px collapsed width.
+**Resolution:** Outline buttons with SVG icon + text label on desktop (`themeColor="primary"` for Edit, `themeColor="error"` for Delete). The text label is hidden via CSS on smaller viewports; `aria-label` with the user's full name is always present.
 
-**Concern (product owner):** Navigating between drawer items didn't update the content area or reflect the active route.
+### Teams Column
 
-**Resolution:**
-- Removed the custom `kendoDrawerItemTemplate` entirely — Kendo renders items natively from the `[items]` binding.
-- Active state is driven reactively: `toSignal(router.events.pipe(filter(NavigationEnd), map(url)))` feeds a `computed()` that marks the matching item as `selected`.
-- `(select)` event calls `Router.navigate([item.path])` and collapses the drawer on mobile.
+**Concern:** Using Kendo Chip components for team names looked interactive — users would click expecting to filter or remove a team.
 
-#### Responsive Grid — Three Breakpoints
+**Resolution:** Replaced with static pill `<span>` elements. Same visual density, no false affordance.
 
-**Concern (product owner):** The grid needs to work on desktop, tablet, and phone without degrading to an unusable table on small screens.
+### User Avatars
 
-**Resolution:** Three modes driven by `_width` signal:
+**Concern:** Initials-only avatars feel placeholder-quality for a management UI.
 
-| Breakpoint | Mode | Behaviour |
-|---|---|---|
-| ≥ 1024px | Desktop | Full grid — all columns, icon + text action buttons, paginator with 5 page buttons + item count |
-| 640–1023px | Tablet | Phone/Teams columns hidden, actions icon-only, 3 page buttons |
-| < 640px | Phone | Kendo Grid `dataLayoutMode: 'stacked'` — each row renders as a label/value stack, 1 page button |
-
-`kendoGridBinding` is used for auto-databinding — paging, sorting, and filtering are handled entirely by the grid without manual data slicing.
-
-#### Actions Column
-
-**Concern (product owner):** Icon-only buttons are inaccessible and visually ambiguous.
-
-**Resolution:**
-- Desktop: `fillMode="outline"` buttons with SVG icon + text label ("Edit", "Delete"), colored by intent (`themeColor="primary"` / `themeColor="error"`).
-- Tablet/phone: label hidden via CSS (`.action-label { display: none }`), `aria-label` always present for screen readers.
-
-#### Teams Column — False Interactivity
-
-**Concern (product owner):** Kendo Chip components in the Teams column looked like interactive filters — users might click expecting something to happen.
-
-**Resolution:** Replaced chips with static `.team-badge` `<span>` elements styled as pills (rounded, subtle background). Visually scannable, clearly non-interactive.
-
-#### Grid Vertical Scrolling
-
-**Concern (product owner):** With many rows, the grid expanded to push the pager below the viewport.
-
-**Resolution:** `[height]="gridHeight()"` on `kendo-grid`, where `gridHeight` is a computed signal: `viewportHeight - 225px` (accounts for top bar, toolbar, pager). Recalculates on `window:resize` via `host: { '(window:resize)': 'onResize()' }`.
-
-#### Content Width & Left-Side Clipping
-
-**Concern (product owner):** App content wasn't filling the full viewport width; on mobile, the mini drawer (overlay mode, 50px wide) was covering the left edge of the content.
-
-**Resolution:**
-- Full-width flex chain: `app-root → .shell → .shell__body → kendo-drawer-container`, each with `width: 100%`.
-- On mobile (`max-width: 768px`), `padding-left: 62px` on `.main-content` clears the 50px mini drawer plus a 12px gap.
-
----
-
-### Runtime & Framework Issues
-
-#### `$localize` ReferenceError
-
-`ng add @angular/localize` inserts only a TypeScript type reference (`/// <reference types="@angular/localize" />`), which doesn't initialize the runtime. Fixed by replacing it with a proper runtime import as the **first line** of `main.ts`:
-
-```typescript
-import '@angular/localize/init';
-```
-
-The `polyfills` entry was removed from `angular.json` to avoid double-initialization.
-
-#### Kendo `i18n-on` Bug (Angular 22)
-
-Kendo Angular Inputs' fesm2022 bundle references an `i18n-on` attribute that doesn't exist in Angular 22, crashing at compile time. Fixed with `patch-package`: a one-line patch removes the attribute reference from the built bundle, applied automatically via `postinstall` in `package.json`.
-
-#### Angular 22 Standalone Conventions
-
-Angular v20+ makes `standalone: true` the default — setting it explicitly is a no-op at best and noise at worst. All components follow the current convention: no `standalone` flag, no NgModules anywhere.
-
-#### `@HostListener` / `@HostBinding` Prohibition
-
-Project rules forbid `@HostListener` and `@HostBinding` decorators. All host event bindings use the `host` object on `@Component`:
-
-```typescript
-@Component({
-  host: { '(window:resize)': 'onResize()' }
-})
-```
-
-#### Constructor Injection
-
-All services use Angular's `inject()` function — no constructor injection anywhere in the codebase.
+**Resolution:** Real face photos (downloaded from pravatar.cc) for the first eight users. A shared `UserAvatarComponent` renders the photo when available and falls back to initials — so new records without a photo still look intentional.
 
 ---
 
@@ -181,7 +108,7 @@ src/
 │   │   └── services/      # UserService (signal-based CRUD)
 │   ├── features/
 │   │   └── users/
-│   │       ├── user-grid/     # Main data grid with responsive layout
+│   │       ├── user-grid/     # Data grid with responsive layout and CRUD triggers
 │   │       ├── user-dialog/   # Add/Edit dialog (reactive form, upload, multiselect)
 │   │       └── tabs/          # Coming-soon placeholders for other sections
 │   ├── layout/
@@ -191,7 +118,7 @@ src/
 │   └── shared/
 │       └── user-avatar/   # Avatar component: photo or initials fallback
 └── public/
-    └── avatars/           # Static JPEG avatars (pravatar.cc)
+    └── avatars/           # Static JPEG avatars
 ```
 
 ---
@@ -203,5 +130,5 @@ This project was built entirely through a Claude Code session. The workflow:
 1. **Architecture first** — models, service layer, routing, and shell were locked in before any feature work.
 2. **Iterative UI** — each component was built, served, reviewed in the browser, and refined based on visual and functional feedback.
 3. **Constraint-driven** — the session operated under explicit rules (no NgModules, no `@HostListener`, `inject()` only, individual Kendo barrel constants) enforced throughout.
-4. **Real debugging** — runtime errors (`$localize`, `i18n-on` patch, type mismatches, Kendo API edge cases) were diagnosed from actual console output and fixed incrementally.
+4. **Real debugging** — runtime errors were diagnosed from actual console output and fixed incrementally.
 5. **No hallucination policy** — Kendo-specific APIs were verified against actual type definitions in `node_modules` before use, not assumed from training memory.
