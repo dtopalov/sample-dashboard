@@ -73,7 +73,7 @@ The wireframe was provided as a starting point. It establishes the basic informa
 
 | Wireframe problem | Resolution |
 |---|---|
-| Column truncation | Resizable grid columns; `kendoGridBinding` auto-fits layout |
+| Column truncation | Explicit column widths per field; `[resizable]="true"` lets users adjust further |
 | Broken placeholder data | Typed `UserStatus` union, real mock data, no placeholder strings |
 | Mixed-language UI | Single locale UI; language switcher in top bar (noop for non-English, explicitly labelled) |
 | No avatar fallback | `UserAvatarComponent` — shows photo if available, initials fallback otherwise |
