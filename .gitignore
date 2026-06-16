@@ -42,3 +42,8 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Kendo UI license (stored globally at ~/.telerik/telerik-license.txt)
+kendo-ui-license.txt
+telerik-license.txt
+.telerik/

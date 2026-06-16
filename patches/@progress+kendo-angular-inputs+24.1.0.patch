@@ -1,0 +1,20 @@
+diff --git a/node_modules/@progress/kendo-angular-inputs/fesm2022/progress-kendo-angular-inputs.mjs b/node_modules/@progress/kendo-angular-inputs/fesm2022/progress-kendo-angular-inputs.mjs
+index af117f1..d283d75 100644
+--- a/node_modules/@progress/kendo-angular-inputs/fesm2022/progress-kendo-angular-inputs.mjs
++++ b/node_modules/@progress/kendo-angular-inputs/fesm2022/progress-kendo-angular-inputs.mjs
+@@ -2953,7 +2953,6 @@ class SwitchComponent {
+             }
+         ], viewQueries: [{ propertyName: "track", first: true, predicate: ["track"], descendants: true, static: true }, { propertyName: "thumb", first: true, predicate: ["thumb"], descendants: true, static: true }], exportAs: ["kendoSwitch"], ngImport: i0, template: `
+         <ng-container kendoSwitchLocalizedMessages
+-            i18n-on="kendo.switch.on|The **On** label of the Switch."
+             on="ON"
+             i18n-off="kendo.switch.off|The **Off** label of the Switch."
+             off="OFF"
+@@ -2998,7 +2997,6 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "19.2.25", ngImpo
+                     selector: 'kendo-switch',
+                     template: `
+         <ng-container kendoSwitchLocalizedMessages
+-            i18n-on="kendo.switch.on|The **On** label of the Switch."
+             on="ON"
+             i18n-off="kendo.switch.off|The **Off** label of the Switch."
+             off="OFF"
